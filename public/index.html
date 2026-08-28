@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ani Bot</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+        .container {
+            text-align: center;
+            padding: 40px 20px;
+            max-width: 600px;
+        }
+        .logo {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #a78bfa, #60a5fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .tagline {
+            font-size: 1.1rem;
+            color: #a0aec0;
+            margin-bottom: 40px;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+        .feature {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 0.95rem;
+        }
+        .feature span { font-size: 1.5rem; display: block; margin-bottom: 6px; }
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #7c3aed, #2563eb);
+            color: #fff;
+            text-decoration: none;
+            padding: 14px 36px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(124, 58, 237, 0.6);
+        }
+        .status {
+            margin-top: 30px;
+            color: #68d391;
+            font-size: 0.9rem;
+        }
+        .status::before { content: "● "; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🎌</div>
+        <h1>Ani Bot</h1>
+        <p class="tagline">Telegram orqali eng yaxshi anime platformasi</p>
+
+        <div class="features">
+            <div class="feature">
+                <span>🔎</span>
+                Anime qidirish
+            </div>
+            <div class="feature">
+                <span>▶️</span>
+                HD sifatida ko'rish
+            </div>
+            <div class="feature">
+                <span>⭐</span>
+                Sevimlilar ro'yxati
+            </div>
+            <div class="feature">
+                <span>💎</span>
+                Premium kontent
+            </div>
+        </div>
+
+        <a href="https://t.me/YourAnimeBot" class="btn">
+            🚀 Botni ishga tushirish
+        </a>
+
+        <p class="status">Bot ishlayapti</p>
+    </div>
+</body>
+</html>

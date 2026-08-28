@@ -1,0 +1,18 @@
+{
+  "bot_token": "8632497118:AAHtAKmRtNEf1EI1QgNw1koB2g4S1ngnDQI",
+  "admin_ids": [2076192529],
+  "bot_username": "kino_anime_serial_bot",
+  "referral_bonus": 1000,
+  "welcome_bonus": 1000,
+  "premium_prices": {
+    "7": 5000,
+    "30": 15000,
+    "365": 100000
+  },
+  "polling_timeout": 30,
+  "retry_delay": 5,
+  "max_retries": 3,
+  "pagination_size": 8,
+  "broadcast_delay": 0.05,
+  "log_level": "INFO"
+}

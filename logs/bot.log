@@ -1,0 +1,63 @@
+2026-08-27 22:39:29 [INFO] __main__: ============================================================
+2026-08-27 22:39:29 [INFO] __main__:   Ani Telegram Bot ishga tushmoqda...
+2026-08-27 22:39:29 [INFO] __main__: ============================================================
+2026-08-27 22:39:29 [INFO] __main__: Python versiyasi: 3.11.0
+2026-08-27 22:39:29 [INFO] database: Database initialized successfully.
+2026-08-27 22:39:29 [INFO] __main__: Ma'lumotlar bazasi tayyor.
+2026-08-27 22:39:30 [INFO] __main__: Bot ulandi: @kino_anime_serial_bot (AnishortBot)
+2026-08-27 22:39:30 [INFO] __main__: Polling boshlandi...
+2026-08-27 22:39:30 [INFO] handlers: New user registered: 2076192529 (@NABIYEV_BAHROM) referred_by=None
+2026-08-27 22:42:16 [INFO] admin: Admin 2076192529 added channel -1004302078967
+2026-08-27 22:42:22 [WARNING] api: HTTP error on getChatMember (attempt 1): 400 Bad Request
+2026-08-27 22:42:22 [INFO] api: Retrying getChatMember in 5s...
+2026-08-27 22:42:28 [WARNING] api: HTTP error on getChatMember (attempt 2): 400 Bad Request
+2026-08-27 22:42:28 [INFO] api: Retrying getChatMember in 10s...
+2026-08-27 22:42:38 [WARNING] api: HTTP error on getChatMember (attempt 3): 400 Bad Request
+2026-08-27 22:42:38 [ERROR] api: All 3 attempts failed for getChatMember: HTTP Error 400: Bad Request
+2026-08-27 22:42:38 [WARNING] api: getChatMember failed for chat=-1004302078967 user=2076192529: [0] HTTP Error 400: Bad Request
+2026-08-27 22:42:40 [WARNING] api: HTTP error on answerCallbackQuery (attempt 1): 400 Bad Request
+2026-08-27 22:42:40 [INFO] api: Retrying answerCallbackQuery in 5s...
+2026-08-27 22:42:45 [WARNING] api: HTTP error on answerCallbackQuery (attempt 2): 400 Bad Request
+2026-08-27 22:42:45 [INFO] api: Retrying answerCallbackQuery in 10s...
+2026-08-27 22:42:56 [WARNING] api: HTTP error on answerCallbackQuery (attempt 3): 400 Bad Request
+2026-08-27 22:42:56 [ERROR] api: All 3 attempts failed for answerCallbackQuery: HTTP Error 400: Bad Request
+2026-08-27 22:42:56 [WARNING] api: answerCallbackQuery failed: [0] HTTP Error 400: Bad Request
+2026-08-27 22:42:57 [WARNING] api: HTTP error on getChatMember (attempt 1): 400 Bad Request
+2026-08-27 22:42:57 [INFO] api: Retrying getChatMember in 5s...
+2026-08-27 22:43:02 [WARNING] api: HTTP error on getChatMember (attempt 2): 400 Bad Request
+2026-08-27 22:43:02 [INFO] api: Retrying getChatMember in 10s...
+2026-08-27 22:43:13 [WARNING] api: HTTP error on getChatMember (attempt 3): 400 Bad Request
+2026-08-27 22:43:13 [ERROR] api: All 3 attempts failed for getChatMember: HTTP Error 400: Bad Request
+2026-08-27 22:43:13 [WARNING] api: getChatMember failed for chat=-1004302078967 user=2076192529: [0] HTTP Error 400: Bad Request
+2026-08-27 22:43:14 [WARNING] api: HTTP error on answerCallbackQuery (attempt 1): 400 Bad Request
+2026-08-27 22:43:14 [INFO] api: Retrying answerCallbackQuery in 5s...
+2026-08-27 22:43:19 [WARNING] api: HTTP error on answerCallbackQuery (attempt 2): 400 Bad Request
+2026-08-27 22:43:19 [INFO] api: Retrying answerCallbackQuery in 10s...
+2026-08-27 22:43:31 [WARNING] api: HTTP error on answerCallbackQuery (attempt 3): 400 Bad Request
+2026-08-27 22:43:31 [ERROR] api: All 3 attempts failed for answerCallbackQuery: HTTP Error 400: Bad Request
+2026-08-27 22:43:31 [WARNING] api: answerCallbackQuery failed: [0] HTTP Error 400: Bad Request
+2026-08-27 22:43:34 [WARNING] api: HTTP error on getChatMember (attempt 1): 400 Bad Request
+2026-08-27 22:43:34 [INFO] api: Retrying getChatMember in 5s...
+2026-08-27 22:43:39 [WARNING] api: HTTP error on getChatMember (attempt 2): 400 Bad Request
+2026-08-27 22:43:39 [INFO] api: Retrying getChatMember in 10s...
+2026-08-27 22:43:50 [WARNING] api: HTTP error on getChatMember (attempt 3): 400 Bad Request
+2026-08-27 22:43:50 [ERROR] api: All 3 attempts failed for getChatMember: HTTP Error 400: Bad Request
+2026-08-27 22:43:50 [WARNING] api: getChatMember failed for chat=-1004302078967 user=2076192529: [0] HTTP Error 400: Bad Request
+2026-08-27 22:43:52 [WARNING] api: HTTP error on getChatMember (attempt 1): 400 Bad Request
+2026-08-27 22:43:52 [INFO] api: Retrying getChatMember in 5s...
+2026-08-27 22:43:57 [WARNING] api: HTTP error on getChatMember (attempt 2): 400 Bad Request
+2026-08-27 22:43:57 [INFO] api: Retrying getChatMember in 10s...
+2026-08-27 22:44:08 [WARNING] api: HTTP error on getChatMember (attempt 3): 400 Bad Request
+2026-08-27 22:44:08 [ERROR] api: All 3 attempts failed for getChatMember: HTTP Error 400: Bad Request
+2026-08-27 22:44:08 [WARNING] api: getChatMember failed for chat=-1004302078967 user=2076192529: [0] HTTP Error 400: Bad Request
+2026-08-27 22:44:10 [WARNING] api: HTTP error on answerCallbackQuery (attempt 1): 400 Bad Request
+2026-08-27 22:44:10 [INFO] api: Retrying answerCallbackQuery in 5s...
+2026-08-27 22:44:16 [WARNING] api: HTTP error on answerCallbackQuery (attempt 2): 400 Bad Request
+2026-08-27 22:44:16 [INFO] api: Retrying answerCallbackQuery in 10s...
+2026-08-27 22:44:26 [WARNING] api: HTTP error on answerCallbackQuery (attempt 3): 400 Bad Request
+2026-08-27 22:44:26 [ERROR] api: All 3 attempts failed for answerCallbackQuery: HTTP Error 400: Bad Request
+2026-08-27 22:44:26 [WARNING] api: answerCallbackQuery failed: [0] HTTP Error 400: Bad Request
+2026-08-27 22:44:27 [WARNING] api: HTTP error on getChatMember (attempt 1): 400 Bad Request
+2026-08-27 22:44:27 [INFO] api: Retrying getChatMember in 5s...
+2026-08-27 22:44:32 [WARNING] api: HTTP error on getChatMember (attempt 2): 400 Bad Request
+2026-08-27 22:44:32 [INFO] api: Retrying getChatMember in 10s...
