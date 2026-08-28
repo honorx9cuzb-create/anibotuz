@@ -1,6 +1,6 @@
 """
-bot.py — Entry point for Ani Telegram Bot.
-Long-polling loop using only Python standard library.
+bot.py — Entry point for ANIME BOT PRO v4.
+Long-polling loop using ONLY Python standard library.
 Run with: python bot.py
 """
 
@@ -30,44 +30,8 @@ logger = logging.getLogger(__name__)
 import database as db
 import api
 import handlers
-from config import POLLING_TIMEOUT, RETRY_DELAY, BOT_TOKEN, BOT_USERNAME
-
-
-def main():
-    logger.info("=" * 60)
-    logger.info("  Ani Telegram Bot ishga tushmoqda...")
-    logger.info("=" * 60)
-
-    # ── Python version check ─────────────────────────────────────────────────
-    if sys.version_info < (3, 9):
-        logger.critical(f"Python 3.9+ talab qilinadi. Joriy versiya: {sys.version}")
-        sys.exit(1)
-
-    logger.info(f"Python versiyasi: {sys.version.split()[0]}")
-
-    # ── Initialize database ──────────────────────────────────────────────────
-    try:
-        db.init_db()
-        logger.info("Ma'lumotlar bazasi tayyor.")
-    except Exception as e:
-        logger.critical(f"Ma'lumotlar bazasini ishga tushirishda xatolik: {e}")
-        sys.exit(1)
-
-    # ── Verify bot token ─────────────────────────────────────────────────────
-    try:
-        me = api.get_me()
-        bot_name = me.get("first_name", "")
-        bot_user = me.get("username", BOT_USERNAME)
-        logger.info(f"Bot ulandi: @{bot_user} ({bot_name})")
-        print(f"\n✅  Bot ishga tushdi: @{bot_user} ({bot_name})")
-        print(f"📋  Loglar: logs/bot.log")
-        print(f"🛑  To'xtatish uchun: Ctrl+C\n")
-    except Exception as e:
-        logger.critical(f"Bot token noto'g'ri yoki ulanish xatosi: {e}")
-        sys.exit(1)
-
-    # ── Start polling loop ───────────────────────────────────────────────────
-    polling_loop()
+import scheduler as sched
+from config import POLLING_TIMEOUT, RETRY_DELAY, BOT_USERNAME
 
 
 def polling_loop():
@@ -93,41 +57,111 @@ def polling_loop():
                 if update_id is None:
                     continue
 
-                # Advance offset past this update
                 offset = update_id + 1
 
                 try:
                     handlers.handle_update(update)
-                except Exception as e:
+                except Exception as exc:
                     logger.error(
-                        f"handle_update xatosi (update_id={update_id}): {e}",
+                        "handle_update xatosi (update_id={}): {}".format(update_id, exc),
                         exc_info=True,
                     )
-                    # Continue processing next updates even if one fails
 
         except KeyboardInterrupt:
             logger.info("Bot to'xtatildi (KeyboardInterrupt).")
             print("\n👋  Bot to'xtatildi.")
             sys.exit(0)
 
-        except Exception as e:
+        except Exception as exc:
             consecutive_errors += 1
             logger.error(
-                f"Polling xatosi ({consecutive_errors}/{max_consecutive_errors}): {e}",
+                "Polling xatosi ({}/{}): {}".format(
+                    consecutive_errors, max_consecutive_errors, exc),
                 exc_info=False,
             )
 
             if consecutive_errors >= max_consecutive_errors:
+                wait = RETRY_DELAY * 5
                 logger.critical(
-                    f"{max_consecutive_errors} ta ketma-ket xatolik. "
-                    f"{RETRY_DELAY * 5}s kutilmoqda..."
+                    "{} ta ketma-ket xatolik. {}s kutilmoqda...".format(
+                        max_consecutive_errors, wait)
                 )
-                time.sleep(RETRY_DELAY * 5)
+                time.sleep(wait)
                 consecutive_errors = 0
             else:
                 backoff = min(RETRY_DELAY * consecutive_errors, 60)
-                logger.info(f"{backoff}s kutilmoqda...")
+                logger.info("{}s kutilmoqda...".format(backoff))
                 time.sleep(backoff)
+
+
+def main():
+    # ── Print startup banner ─────────────────────────────────────────────────
+    print("")
+    print("=========================================")
+    print("  ANIME BOT PRO v4")
+    print("  Python: {}.{}+".format(sys.version_info.major, sys.version_info.minor))
+    print("  Dependencies: 0")
+    print("  Database: SQLite")
+    print("  Telegram API: Connecting...")
+    print("=========================================")
+    print("")
+
+    logger.info("=" * 60)
+    logger.info("  ANIME BOT PRO v4 ishga tushmoqda...")
+    logger.info("=" * 60)
+
+    # ── Python version check ─────────────────────────────────────────────────
+    if sys.version_info < (3, 9):
+        logger.critical(
+            "Python 3.9+ talab qilinadi. Joriy versiya: {}".format(sys.version))
+        sys.exit(1)
+
+    logger.info("Python versiyasi: {}".format(sys.version.split()[0]))
+
+    # ── Initialize database ──────────────────────────────────────────────────
+    try:
+        db.init_db()
+        logger.info("Ma'lumotlar bazasi tayyor.")
+    except Exception as exc:
+        logger.critical("Ma'lumotlar bazasini ishga tushirishda xatolik: {}".format(exc))
+        sys.exit(1)
+
+    # ── Verify bot token ─────────────────────────────────────────────────────
+    try:
+        me = api.get_me()
+        bot_name = me.get("first_name", "")
+        bot_user = me.get("username", BOT_USERNAME)
+        logger.info("Bot ulandi: @{} ({})".format(bot_user, bot_name))
+
+        print("=========================================")
+        print("  ANIME BOT PRO v4")
+        print("  Python: {}".format(sys.version.split()[0]))
+        print("  Dependencies: 0")
+        print("  Database: SQLite")
+        print("  Telegram API: Connected")
+        print("  Status: ONLINE")
+        print("=========================================")
+        print("")
+        print("  Bot: @{} ({})".format(bot_user, bot_name))
+        print("  Loglar: logs/bot.log")
+        print("  To'xtatish: Ctrl+C")
+        print("")
+
+    except Exception as exc:
+        logger.critical("Bot token noto'g'ri yoki ulanish xatosi: {}".format(exc))
+        print("\n❌  Bot ulanmadi: {}".format(exc))
+        print("config.json da bot_token ni tekshiring.\n")
+        sys.exit(1)
+
+    # ── Start background scheduler ────────────────────────────────────────────
+    try:
+        sched.start()
+        logger.info("Scheduler ishga tushdi.")
+    except Exception as exc:
+        logger.warning("Scheduler xatosi: {}".format(exc))
+
+    # ── Start polling loop ────────────────────────────────────────────────────
+    polling_loop()
 
 
 if __name__ == "__main__":

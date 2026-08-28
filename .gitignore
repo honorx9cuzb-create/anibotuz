@@ -1,0 +1,38 @@
+# ANIME BOT PRO v4 — .gitignore
+# =====================================================
+# NEVER commit secrets or generated files
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Config (contains secrets — use config.example.json as template)
+config.json
+.env
+*.env
+
+# Logs
+logs/*.log
+logs/
+
+# Database
+data/anime.db
+data/backups/
+data/exports/
+data/*.db
+
+# Temp files
+tmp/
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo

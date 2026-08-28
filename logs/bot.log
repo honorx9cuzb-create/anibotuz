@@ -61,3 +61,18 @@
 2026-08-27 22:44:27 [INFO] api: Retrying getChatMember in 5s...
 2026-08-27 22:44:32 [WARNING] api: HTTP error on getChatMember (attempt 2): 400 Bad Request
 2026-08-27 22:44:32 [INFO] api: Retrying getChatMember in 10s...
+2026-08-28 06:26:56 [INFO] __main__: ============================================================
+2026-08-28 06:26:56 [INFO] __main__:   ANIME BOT PRO v4 ishga tushmoqda...
+2026-08-28 06:26:56 [INFO] __main__: ============================================================
+2026-08-28 06:26:56 [INFO] __main__: Python versiyasi: 3.11.0
+2026-08-28 06:26:56 [INFO] database: Database initialized successfully.
+2026-08-28 06:26:56 [INFO] __main__: Ma'lumotlar bazasi tayyor.
+2026-08-28 06:26:56 [INFO] __main__: Bot ulandi: @kino_anime_serial_bot (AnishortBot)
+2026-08-28 06:26:56 [INFO] scheduler: Scheduler loop started.
+2026-08-28 06:26:56 [INFO] scheduler: Scheduler started (daemon thread).
+2026-08-28 06:26:56 [INFO] __main__: Scheduler ishga tushdi.
+2026-08-28 06:26:56 [INFO] __main__: Polling boshlandi...
+2026-08-28 06:26:56 [INFO] handlers: New user: 2076192529 (@NABIYEV_BAHROM) referred_by=None
+2026-08-28 06:27:22 [INFO] database: Backup created: C:\Users\hpbah\OneDrive\Desktop\New folder (4)\ani\data\backups\anime_20260828_012722.db
+2026-08-28 06:27:22 [INFO] admin: Admin 2076192529 created backup: C:\Users\hpbah\OneDrive\Desktop\New folder (4)\ani\data\backups\anime_20260828_012722.db
+2026-08-28 06:27:38 [INFO] admin: Admin 2076192529 toggled maintenance mode: True

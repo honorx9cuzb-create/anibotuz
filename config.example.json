@@ -1,0 +1,34 @@
+{
+  "bot_token": "YOUR_BOT_TOKEN_HERE",
+  "bot_username": "YOUR_BOT_USERNAME",
+  "admin_ids": [123456789],
+  "welcome_bonus": 1000,
+  "referral_bonus": 1000,
+  "premium_prices": {
+    "7": 5000,
+    "30": 15000,
+    "90": 35000,
+    "365": 100000
+  },
+  "polling_timeout": 30,
+  "retry_delay": 5,
+  "max_retries": 3,
+  "pagination_size": 8,
+  "broadcast_delay": 0.05,
+  "log_level": "INFO",
+  "maintenance_mode": false,
+  "click": {
+    "service_id": "",
+    "merchant_id": "",
+    "secret_key": ""
+  },
+  "payme": {
+    "merchant_id": "",
+    "secret_key": ""
+  },
+  "ai": {
+    "enabled": false,
+    "api_key": "",
+    "base_url": "https://api.openai.com/v1"
+  }
+}

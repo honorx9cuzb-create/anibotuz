@@ -1,19 +1,21 @@
 """
-payments.py — Premium purchase and balance management for Ani Telegram Bot.
+payments.py — Premium purchase and balance management for ANIME BOT PRO v4.
 All purchases deduct from internal balance. No external payment gateway.
+Python 3.9 compatible. Standard library only.
 """
 
 import logging
 from datetime import datetime, timedelta
+from typing import Optional
 
 import database as db
-from utils import make_transaction_id, premium_until_str, format_currency
+from utils import make_transaction_id, format_currency
 from config import PREMIUM_PRICES
 
 logger = logging.getLogger(__name__)
 
 
-def get_premium_price(days: str) -> int | None:
+def get_premium_price(days: str) -> Optional[int]:
     """Return price for a premium plan in UZS, or None if invalid."""
     prices = _get_current_prices()
     return prices.get(str(days))
@@ -58,10 +60,16 @@ def purchase_premium(telegram_id: int, days: str) -> dict:
         shortage = price - user["balance"]
         return {
             "success": False,
-            "message": f"❌ Balans yetarli emas.\n\n"
-                       f"💰 Sizning balansingiz: <b>{format_currency(user['balance'])}</b>\n"
-                       f"💎 Kerakli summa: <b>{format_currency(price)}</b>\n"
-                       f"📉 Yetishmayapti: <b>{format_currency(shortage)}</b>",
+            "message": (
+                "❌ Balans yetarli emas.\n\n"
+                "💰 Sizning balansingiz: <b>{}</b>\n"
+                "💎 Kerakli summa: <b>{}</b>\n"
+                "📉 Yetishmayapti: <b>{}</b>"
+            ).format(
+                format_currency(user["balance"]),
+                format_currency(price),
+                format_currency(shortage),
+            ),
             "new_balance": user["balance"],
             "premium_until": user["premium_until"],
         }
@@ -108,21 +116,26 @@ def purchase_premium(telegram_id: int, days: str) -> dict:
     updated_user = db.get_user(telegram_id)
 
     logger.info(
-        f"Premium purchased: user={telegram_id} days={days} "
-        f"price={price} until={new_expiry_str} txid={txid}"
+        "Premium purchased: user={} days={} price={} until={} txid={}".format(
+            telegram_id, days, price, new_expiry_str, txid)
     )
 
-    plan_labels = {"7": "7 kun", "30": "30 kun", "365": "1 yil"}
-    plan_label = plan_labels.get(days, f"{days} kun")
+    plan_labels = {"7": "7 kun", "30": "30 kun", "90": "90 kun", "365": "1 yil"}
+    plan_label = plan_labels.get(days, "{} kun".format(days))
 
     return {
         "success": True,
         "message": (
-            f"✅ <b>Premium muvaffaqiyatli faollashtirildi!</b>\n\n"
-            f"💎 Reja: <b>{plan_label}</b>\n"
-            f"📅 Tugash sanasi: <b>{new_expiry.strftime('%d.%m.%Y')}</b>\n"
-            f"💰 Hisobdan yechildi: <b>{format_currency(price)}</b>\n"
-            f"💳 Qoldiq balans: <b>{format_currency(updated_user['balance'])}</b>"
+            "✅ <b>Premium muvaffaqiyatli faollashtirildi!</b>\n\n"
+            "💎 Reja: <b>{}</b>\n"
+            "📅 Tugash sanasi: <b>{}</b>\n"
+            "💰 Hisobdan yechildi: <b>{}</b>\n"
+            "💳 Qoldiq balans: <b>{}</b>"
+        ).format(
+            plan_label,
+            new_expiry.strftime("%d.%m.%Y"),
+            format_currency(price),
+            format_currency(updated_user["balance"]),
         ),
         "new_balance": updated_user["balance"],
         "premium_until": new_expiry_str,
@@ -142,20 +155,20 @@ def admin_add_balance(telegram_id: int, amount: int, admin_id: int) -> dict:
     db.create_payment(
         user_id=user["id"],
         amount=amount,
-        provider=f"admin:{admin_id}",
+        provider="admin:{}".format(admin_id),
         transaction_id=txid,
         status="completed",
     )
 
-    logger.info(f"Admin {admin_id} added {amount} UZS to user {telegram_id}")
+    logger.info("Admin {} added {} UZS to user {}".format(admin_id, amount, telegram_id))
     return {
         "success": True,
         "message": (
-            f"✅ Balans muvaffaqiyatli qo'shildi!\n\n"
-            f"👤 Foydalanuvchi: {telegram_id}\n"
-            f"💰 Qo'shildi: <b>{format_currency(amount)}</b>\n"
-            f"💳 Yangi balans: <b>{format_currency(updated['balance'])}</b>"
-        ),
+            "✅ Balans muvaffaqiyatli qo'shildi!\n\n"
+            "👤 Foydalanuvchi: {}\n"
+            "💰 Qo'shildi: <b>{}</b>\n"
+            "💳 Yangi balans: <b>{}</b>"
+        ).format(telegram_id, format_currency(amount), format_currency(updated["balance"])),
     }
 
 
@@ -168,21 +181,22 @@ def admin_remove_balance(telegram_id: int, amount: int, admin_id: int) -> dict:
     if user["balance"] < amount:
         return {
             "success": False,
-            "message": f"❌ Foydalanuvchi balansi yetarli emas.\nMavjud: {format_currency(user['balance'])}",
+            "message": "❌ Foydalanuvchi balansi yetarli emas.\nMavjud: {}".format(
+                format_currency(user["balance"])),
         }
 
     db.remove_balance(telegram_id, amount)
     updated = db.get_user(telegram_id)
 
-    logger.info(f"Admin {admin_id} removed {amount} UZS from user {telegram_id}")
+    logger.info("Admin {} removed {} UZS from user {}".format(admin_id, amount, telegram_id))
     return {
         "success": True,
         "message": (
-            f"✅ Balans muvaffaqiyatli ayirildi!\n\n"
-            f"👤 Foydalanuvchi: {telegram_id}\n"
-            f"💸 Ayirildi: <b>{format_currency(amount)}</b>\n"
-            f"💳 Yangi balans: <b>{format_currency(updated['balance'])}</b>"
-        ),
+            "✅ Balans muvaffaqiyatli ayirildi!\n\n"
+            "👤 Foydalanuvchi: {}\n"
+            "💸 Ayirildi: <b>{}</b>\n"
+            "💳 Yangi balans: <b>{}</b>"
+        ).format(telegram_id, format_currency(amount), format_currency(updated["balance"])),
     }
 
 
@@ -208,13 +222,14 @@ def admin_give_premium(telegram_id: int, days: str, admin_id: int) -> dict:
     new_expiry_str = new_expiry.strftime("%Y-%m-%d %H:%M:%S")
     db.set_premium(telegram_id, new_expiry_str)
 
-    logger.info(f"Admin {admin_id} gave premium to user {telegram_id} for {days} days")
+    logger.info("Admin {} gave premium to user {} for {} days".format(
+        admin_id, telegram_id, days))
     return {
         "success": True,
         "message": (
-            f"✅ Premium berildi!\n\n"
-            f"👤 Foydalanuvchi: {telegram_id}\n"
-            f"💎 Davomiyligi: <b>{days} kun</b>\n"
-            f"📅 Tugash sanasi: <b>{new_expiry.strftime('%d.%m.%Y')}</b>"
-        ),
+            "✅ Premium berildi!\n\n"
+            "👤 Foydalanuvchi: {}\n"
+            "💎 Davomiyligi: <b>{} kun</b>\n"
+            "📅 Tugash sanasi: <b>{}</b>"
+        ).format(telegram_id, days, new_expiry.strftime("%d.%m.%Y")),
     }

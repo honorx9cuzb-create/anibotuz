@@ -1,6 +1,7 @@
 """
-api.py — Telegram Bot API client using only Python standard library (urllib).
+api.py — Telegram Bot API client using ONLY Python standard library (urllib).
 Implements all required Telegram methods with retry/backoff logic.
+Python 3.9 compatible — no union type hints (X | Y syntax).
 """
 
 import json
@@ -9,11 +10,13 @@ import time
 import urllib.request
 import urllib.parse
 import urllib.error
+from typing import Optional, List
+
 from config import BOT_TOKEN, MAX_RETRIES, RETRY_DELAY
 
 logger = logging.getLogger(__name__)
 
-BASE_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
+BASE_URL = "https://api.telegram.org/bot{}".format(BOT_TOKEN)
 
 
 class TelegramError(Exception):
@@ -21,21 +24,20 @@ class TelegramError(Exception):
     def __init__(self, description: str, error_code: int = 0):
         self.description = description
         self.error_code = error_code
-        super().__init__(f"[{error_code}] {description}")
+        super().__init__("[{}] {}".format(error_code, description))
 
 
-def telegram(method: str, data: dict = None, files: dict = None,
-             retry: bool = True) -> dict:
+def _call(method: str, data: Optional[dict] = None, retry: bool = True) -> object:
     """
-    Call a Telegram Bot API method.
+    Call a Telegram Bot API method via HTTPS POST with JSON body.
     Returns the 'result' field on success.
-    Raises TelegramError on Telegram API errors.
+    Raises TelegramError on API errors.
+    Never retries on 4xx client errors.
     """
-    url = f"{BASE_URL}/{method}"
+    url = "{}/{}".format(BASE_URL, method)
     data = data or {}
-
-    last_exception = None
     attempts = MAX_RETRIES if retry else 1
+    last_exception = None
 
     for attempt in range(1, attempts + 1):
         try:
@@ -49,12 +51,13 @@ def telegram(method: str, data: dict = None, files: dict = None,
 
             with urllib.request.urlopen(req, timeout=60) as resp:
                 raw = resp.read()
-                result = json.loads(raw.decode("utf-8"))
+
+            result = json.loads(raw.decode("utf-8"))
 
             if not result.get("ok"):
                 err_desc = result.get("description", "Unknown error")
                 err_code = result.get("error_code", 0)
-                # Don't retry for client errors (4xx-like codes)
+                # Do not retry client errors
                 if err_code in (400, 401, 403, 404):
                     raise TelegramError(err_desc, err_code)
                 raise TelegramError(err_desc, err_code)
@@ -63,58 +66,61 @@ def telegram(method: str, data: dict = None, files: dict = None,
 
         except TelegramError:
             raise
-        except urllib.error.HTTPError as e:
-            last_exception = e
-            logger.warning(f"HTTP error on {method} (attempt {attempt}): {e.code} {e.reason}")
-        except urllib.error.URLError as e:
-            last_exception = e
-            logger.warning(f"URL error on {method} (attempt {attempt}): {e.reason}")
-        except json.JSONDecodeError as e:
-            last_exception = e
-            logger.warning(f"JSON decode error on {method} (attempt {attempt}): {e}")
-        except Exception as e:
-            last_exception = e
-            logger.warning(f"Unexpected error on {method} (attempt {attempt}): {e}")
+        except urllib.error.HTTPError as exc:
+            last_exception = exc
+            logger.warning("HTTP error on {} (attempt {}): {} {}".format(
+                method, attempt, exc.code, exc.reason))
+        except urllib.error.URLError as exc:
+            last_exception = exc
+            logger.warning("URL error on {} (attempt {}): {}".format(
+                method, attempt, exc.reason))
+        except json.JSONDecodeError as exc:
+            last_exception = exc
+            logger.warning("JSON decode error on {} (attempt {}): {}".format(
+                method, attempt, exc))
+        except Exception as exc:
+            last_exception = exc
+            logger.warning("Unexpected error on {} (attempt {}): {}".format(
+                method, attempt, exc))
 
         if attempt < attempts:
-            wait = RETRY_DELAY * attempt
-            logger.info(f"Retrying {method} in {wait}s...")
+            wait = min(RETRY_DELAY * attempt, 30)
+            logger.info("Retrying {} in {}s...".format(method, wait))
             time.sleep(wait)
 
-    logger.error(f"All {attempts} attempts failed for {method}: {last_exception}")
+    logger.error("All {} attempts failed for {}: {}".format(attempts, method, last_exception))
     raise TelegramError(str(last_exception))
 
 
-# ─── GETME ───────────────────────────────────────────────────────────────────
+# ─── GETME ────────────────────────────────────────────────────────────────────
 
 def get_me() -> dict:
-    return telegram("getMe")
+    return _call("getMe")
 
 
-# ─── GETUPDATES ──────────────────────────────────────────────────────────────
+# ─── GETUPDATES ───────────────────────────────────────────────────────────────
 
-def get_updates(offset: int = None, timeout: int = 30,
-                allowed_updates: list = None) -> list:
+def get_updates(offset: Optional[int] = None, timeout: int = 30,
+                allowed_updates: Optional[List[str]] = None) -> list:
+    """Long-polling. Returns list of updates (never raises, returns [] on error)."""
     data = {"timeout": timeout}
     if offset is not None:
         data["offset"] = offset
     if allowed_updates is not None:
         data["allowed_updates"] = allowed_updates
     try:
-        result = telegram("getUpdates", data, retry=False)
+        result = _call("getUpdates", data, retry=False)
         return result or []
-    except TelegramError as e:
-        logger.warning(f"getUpdates error: {e}")
-        return []
-    except Exception as e:
-        logger.warning(f"getUpdates unexpected error: {e}")
+    except Exception as exc:
+        logger.warning("getUpdates error: {}".format(exc))
         return []
 
 
 # ─── SEND MESSAGE ─────────────────────────────────────────────────────────────
 
 def send_message(chat_id: int, text: str, parse_mode: str = "HTML",
-                 reply_markup: dict = None, disable_web_page_preview: bool = True) -> dict | None:
+                 reply_markup: Optional[dict] = None,
+                 disable_web_page_preview: bool = True) -> Optional[dict]:
     data = {
         "chat_id": chat_id,
         "text": text,
@@ -124,36 +130,17 @@ def send_message(chat_id: int, text: str, parse_mode: str = "HTML",
     if reply_markup:
         data["reply_markup"] = reply_markup
     try:
-        return telegram("sendMessage", data)
-    except TelegramError as e:
-        logger.warning(f"sendMessage to {chat_id} failed: {e}")
-        return None
-
-
-# ─── SEND VIDEO ───────────────────────────────────────────────────────────────
-
-def send_video(chat_id: int, video: str, caption: str = "",
-               parse_mode: str = "HTML", reply_markup: dict = None) -> dict | None:
-    data = {
-        "chat_id": chat_id,
-        "video": video,
-        "parse_mode": parse_mode,
-    }
-    if caption:
-        data["caption"] = caption
-    if reply_markup:
-        data["reply_markup"] = reply_markup
-    try:
-        return telegram("sendVideo", data)
-    except TelegramError as e:
-        logger.warning(f"sendVideo to {chat_id} failed: {e}")
+        return _call("sendMessage", data)
+    except TelegramError as exc:
+        logger.warning("sendMessage to {} failed: {}".format(chat_id, exc))
         return None
 
 
 # ─── SEND PHOTO ───────────────────────────────────────────────────────────────
 
 def send_photo(chat_id: int, photo: str, caption: str = "",
-               parse_mode: str = "HTML", reply_markup: dict = None) -> dict | None:
+               parse_mode: str = "HTML",
+               reply_markup: Optional[dict] = None) -> Optional[dict]:
     data = {
         "chat_id": chat_id,
         "photo": photo,
@@ -164,9 +151,31 @@ def send_photo(chat_id: int, photo: str, caption: str = "",
     if reply_markup:
         data["reply_markup"] = reply_markup
     try:
-        return telegram("sendPhoto", data)
-    except TelegramError as e:
-        logger.warning(f"sendPhoto to {chat_id} failed: {e}")
+        return _call("sendPhoto", data)
+    except TelegramError as exc:
+        logger.warning("sendPhoto to {} failed: {}".format(chat_id, exc))
+        return None
+
+
+# ─── SEND VIDEO ───────────────────────────────────────────────────────────────
+
+def send_video(chat_id: int, video: str, caption: str = "",
+               parse_mode: str = "HTML",
+               reply_markup: Optional[dict] = None) -> Optional[dict]:
+    """Send video using Telegram file_id. Never downloads the video file."""
+    data = {
+        "chat_id": chat_id,
+        "video": video,
+        "parse_mode": parse_mode,
+    }
+    if caption:
+        data["caption"] = caption
+    if reply_markup:
+        data["reply_markup"] = reply_markup
+    try:
+        return _call("sendVideo", data)
+    except TelegramError as exc:
+        logger.warning("sendVideo to {} failed: {}".format(chat_id, exc))
         return None
 
 
@@ -174,8 +183,8 @@ def send_photo(chat_id: int, photo: str, caption: str = "",
 
 def edit_message_text(chat_id: int, message_id: int, text: str,
                       parse_mode: str = "HTML",
-                      reply_markup: dict = None,
-                      disable_web_page_preview: bool = True) -> dict | None:
+                      reply_markup: Optional[dict] = None,
+                      disable_web_page_preview: bool = True) -> Optional[dict]:
     data = {
         "chat_id": chat_id,
         "message_id": message_id,
@@ -186,10 +195,26 @@ def edit_message_text(chat_id: int, message_id: int, text: str,
     if reply_markup:
         data["reply_markup"] = reply_markup
     try:
-        return telegram("editMessageText", data)
-    except TelegramError as e:
-        if "message is not modified" not in str(e).lower():
-            logger.warning(f"editMessageText failed: {e}")
+        return _call("editMessageText", data)
+    except TelegramError as exc:
+        if "message is not modified" not in str(exc).lower():
+            logger.warning("editMessageText failed: {}".format(exc))
+        return None
+
+
+# ─── EDIT MESSAGE REPLY MARKUP ────────────────────────────────────────────────
+
+def edit_message_reply_markup(chat_id: int, message_id: int,
+                               reply_markup: Optional[dict] = None) -> Optional[dict]:
+    data = {
+        "chat_id": chat_id,
+        "message_id": message_id,
+        "reply_markup": reply_markup or {},
+    }
+    try:
+        return _call("editMessageReplyMarkup", data)
+    except TelegramError as exc:
+        logger.warning("editMessageReplyMarkup failed: {}".format(exc))
         return None
 
 
@@ -203,40 +228,70 @@ def answer_callback_query(callback_query_id: str, text: str = "",
         "show_alert": show_alert,
     }
     try:
-        telegram("answerCallbackQuery", data)
+        _call("answerCallbackQuery", data)
         return True
-    except TelegramError as e:
-        logger.warning(f"answerCallbackQuery failed: {e}")
+    except TelegramError as exc:
+        logger.warning("answerCallbackQuery failed: {}".format(exc))
         return False
 
 
-# ─── GET CHAT MEMBER ─────────────────────────────────────────────────────────
+# ─── GET CHAT MEMBER ──────────────────────────────────────────────────────────
 
-def get_chat_member(chat_id: str, user_id: int) -> dict | None:
+def get_chat_member(chat_id: str, user_id: int) -> Optional[dict]:
     data = {"chat_id": chat_id, "user_id": user_id}
     try:
-        return telegram("getChatMember", data)
-    except TelegramError as e:
-        logger.warning(f"getChatMember failed for chat={chat_id} user={user_id}: {e}")
+        return _call("getChatMember", data)
+    except TelegramError as exc:
+        logger.warning("getChatMember failed chat={} user={}: {}".format(
+            chat_id, user_id, exc))
         return None
 
 
-# ─── DELETE MESSAGE ──────────────────────────────────────────────────────────
+# ─── DELETE MESSAGE ───────────────────────────────────────────────────────────
 
 def delete_message(chat_id: int, message_id: int) -> bool:
     data = {"chat_id": chat_id, "message_id": message_id}
     try:
-        telegram("deleteMessage", data)
+        _call("deleteMessage", data)
         return True
-    except TelegramError as e:
-        logger.warning(f"deleteMessage failed: {e}")
+    except TelegramError as exc:
+        logger.warning("deleteMessage failed: {}".format(exc))
         return False
 
 
-# ─── SUBSCRIPTION CHECK ──────────────────────────────────────────────────────
+# ─── FORWARD MESSAGE ──────────────────────────────────────────────────────────
+
+def forward_message(chat_id: int, from_chat_id: int,
+                    message_id: int) -> Optional[dict]:
+    data = {
+        "chat_id": chat_id,
+        "from_chat_id": from_chat_id,
+        "message_id": message_id,
+    }
+    try:
+        return _call("forwardMessage", data)
+    except TelegramError as exc:
+        logger.warning("forwardMessage failed: {}".format(exc))
+        return None
+
+
+# ─── SEND CHAT ACTION ─────────────────────────────────────────────────────────
+
+def send_chat_action(chat_id: int, action: str = "typing") -> bool:
+    """action: typing, upload_video, upload_photo, etc."""
+    data = {"chat_id": chat_id, "action": action}
+    try:
+        _call("sendChatAction", data)
+        return True
+    except TelegramError as exc:
+        logger.warning("sendChatAction failed: {}".format(exc))
+        return False
+
+
+# ─── SUBSCRIPTION CHECK ───────────────────────────────────────────────────────
 
 def is_subscribed(chat_id: str, user_id: int) -> bool:
-    """Check if a user is subscribed to a channel."""
+    """Check if a user is a member/admin/creator of a channel."""
     member = get_chat_member(chat_id, user_id)
     if not member:
         return False

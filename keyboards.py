@@ -1,31 +1,38 @@
 """
-keyboards.py — Inline and reply keyboard builders for Ani Telegram Bot.
+keyboards.py — Inline and reply keyboard builders for ANIME BOT PRO v4.
 All keyboards return dicts compatible with Telegram's reply_markup JSON.
+Python 3.9 compatible.
 """
 
+from typing import Optional, List, Tuple
 from config import PREMIUM_PRICES, PAGINATION_SIZE
 from utils import escape
 
+# ──────────────────────────────────────────────────────────────────────────────
+# LOW-LEVEL HELPERS
+# ──────────────────────────────────────────────────────────────────────────────
 
-# ─── HELPERS ─────────────────────────────────────────────────────────────────
-
-def inline(buttons: list) -> dict:
-    """Build InlineKeyboardMarkup from a 2D list of (text, callback_data) tuples."""
+def inline(buttons: List[List[Tuple]]) -> dict:
+    """
+    Build InlineKeyboardMarkup.
+    Each row is a list of tuples:
+      (text, callback_data)          — callback button
+      (text, url, "url")             — URL button
+    """
     keyboard = []
     for row in buttons:
-        keyboard_row = []
+        kb_row = []
         for item in row:
-            if len(item) == 2:
-                text, callback = item
-                keyboard_row.append({"text": text, "callback_data": callback})
-            elif len(item) == 3 and item[2] == "url":
-                text, url, _ = item
-                keyboard_row.append({"text": text, "url": url})
-        keyboard.append(keyboard_row)
+            if len(item) == 3 and item[2] == "url":
+                kb_row.append({"text": item[0], "url": item[1]})
+            else:
+                kb_row.append({"text": item[0], "callback_data": item[1]})
+        keyboard.append(kb_row)
     return {"inline_keyboard": keyboard}
 
 
-def reply(buttons: list, resize: bool = True, one_time: bool = False) -> dict:
+def reply(buttons: List[List[str]], resize: bool = True,
+          one_time: bool = False) -> dict:
     """Build ReplyKeyboardMarkup from a 2D list of text strings."""
     keyboard = [[{"text": t} for t in row] for row in buttons]
     return {
@@ -39,114 +46,69 @@ def remove_keyboard() -> dict:
     return {"remove_keyboard": True}
 
 
-# ─── MAIN MENU ────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+# MAIN MENU
+# ──────────────────────────────────────────────────────────────────────────────
 
 def main_menu() -> dict:
     return reply([
-        ["🔎 Anime qidirish", "🔢 ID orqali qidirish"],
+        ["🔎 Qidirish", "🔢 ID qidirish"],
         ["📚 Katalog", "⭐ Sevimlilar"],
-        ["👤 Profil", "💰 Balans"],
-        ["💎 Premium", "🎁 Referal"],
+        ["▶️ Davom ettirish", "📌 Kuzatmoqda"],
+        ["👤 Profil", "🎁 Kunlik bonus"],
+        ["💎 Premium", "🏆 Top Otaku"],
+        ["💰 Balans", "🎁 Referal"],
     ])
 
 
-# ─── SEARCH RESULTS ───────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+# CATALOG / FILTERS
+# ──────────────────────────────────────────────────────────────────────────────
 
-def anime_list_keyboard(anime_rows: list, back_callback: str = "main_menu") -> dict:
-    """Show a list of anime as inline buttons."""
-    rows = []
-    for a in anime_rows:
-        label = f"🎬 {escape(a['title'])}"
-        if a["premium"]:
-            label = "💎 " + label
-        rows.append([(label, f"anime:{a['id']}")])
-    rows.append([("⬅️ Orqaga", back_callback)])
-    return inline(rows)
-
-
-# ─── ANIME PAGE ───────────────────────────────────────────────────────────────
-
-def anime_page_keyboard(anime_id: int, is_fav: bool = False,
-                        back_callback: str = "catalog:0") -> dict:
-    fav_text = "❌ Sevimlilardan o'chirish" if is_fav else "⭐ Sevimlilarga"
+def catalog_filter_keyboard() -> dict:
     return inline([
-        [("▶️ Ko'rish", f"watch:{anime_id}")],
-        [(fav_text, f"favorite:{anime_id}")],
-        [("⬅️ Orqaga", back_callback)],
+        [("🆕 Yangi", "cat:new:0"), ("🔥 Trending", "cat:trending:0")],
+        [("⭐ Reyting", "cat:rating:0"), ("👁 Ko'p ko'rilgan", "cat:views:0")],
+        [("❤️ Ko'p saqlangan", "cat:favorites:0"), ("💎 Premium", "cat:premium:0")],
+        [("🎯 Featured", "cat:featured:0"), ("🎭 Janrlar", "genres:0")],
+        [("⬅️ Orqaga", "main_menu")],
     ])
 
 
-# ─── EPISODES ─────────────────────────────────────────────────────────────────
-
-def episodes_keyboard(episodes: list, anime_id: int) -> dict:
-    """Build episode selection keyboard (max 5 per row)."""
+def genres_keyboard() -> dict:
+    genres = [
+        "Action", "Comedy", "Romance", "Horror", "Fantasy",
+        "Sci-Fi", "Drama", "School", "Mystery", "Supernatural",
+        "Martial Arts", "Game",
+    ]
     rows = []
     row = []
-    for ep in episodes:
-        label = f"▶️ {ep['episode_number']}-qism"
-        row.append((label, f"episode:{anime_id}:{ep['episode_number']}"))
-        if len(row) == 3:
+    for g in genres:
+        row.append(("🎭 {}".format(g), "genre:{}:0".format(g)))
+        if len(row) == 2:
             rows.append(row)
             row = []
     if row:
         rows.append(row)
-    rows.append([("⬅️ Orqaga", f"anime:{anime_id}")])
+    rows.append([("⬅️ Orqaga", "catalog:0")])
     return inline(rows)
 
 
-# ─── PREMIUM ──────────────────────────────────────────────────────────────────
-
-def premium_keyboard(prices: dict = None) -> dict:
-    prices = prices or PREMIUM_PRICES
-    rows = []
-    plan_labels = {"7": "7 kun", "30": "30 kun", "365": "1 yil"}
-    for days, price in prices.items():
-        label = f"💎 Premium {plan_labels.get(days, days+' kun')} — {price:,} UZS"
-        rows.append([(label, f"premium:{days}")])
-    rows.append([("⬅️ Orqaga", "main_menu")])
-    return inline(rows)
-
-
-def premium_confirm_keyboard(days: str, price: int) -> dict:
-    return inline([
-        [(f"💎 Sotib olish ({price:,} UZS)", f"premium_buy:{days}")],
-        [("⬅️ Orqaga", "premium_menu")],
-    ])
-
-
-# ─── CHANNELS ─────────────────────────────────────────────────────────────────
-
-def channels_keyboard(channels: list) -> dict:
-    rows = []
-    for ch in channels:
-        username = ch["username"] or ""
-        title = ch["title"] or f"Kanal {ch['id']}"
-        if username:
-            url = f"https://t.me/{username.lstrip('@')}"
-            rows.append([(f"📢 {escape(title)}", url, "url")])
-        else:
-            rows.append([(f"📢 {escape(title)}", f"noop")])
-    rows.append([("✅ Tekshirish", "check_subscription")])
-    return inline(rows)
-
-
-# ─── CATALOG PAGINATION ───────────────────────────────────────────────────────
-
-def catalog_keyboard(anime_rows: list, page: int, total_pages: int) -> dict:
+def catalog_keyboard(anime_rows: list, page: int, total_pages: int,
+                     sort: str = "new") -> dict:
     rows = []
     for a in anime_rows:
-        label = f"🎬 {escape(a['title'])}"
+        label = "🎬 {}".format(escape(a["title"]))
         if a["premium"]:
             label = "💎 " + label
-        rows.append([(label, f"anime:{a['id']}")])
+        rows.append([(label, "anime:{}".format(a["id"]))])
 
-    # Navigation row
     nav = []
     if page > 0:
-        nav.append(("⬅️", f"catalog:{page - 1}"))
-    nav.append((f"{page + 1}/{total_pages}", "noop"))
+        nav.append(("⬅️", "cat:{}:{}".format(sort, page - 1)))
+    nav.append(("{}/{}".format(page + 1, total_pages), "noop"))
     if page < total_pages - 1:
-        nav.append(("➡️", f"catalog:{page + 1}"))
+        nav.append(("➡️", "cat:{}:{}".format(sort, page + 1)))
     if nav:
         rows.append(nav)
 
@@ -154,48 +116,242 @@ def catalog_keyboard(anime_rows: list, page: int, total_pages: int) -> dict:
     return inline(rows)
 
 
-# ─── FAVORITES ────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+# ANIME LIST (search results, genre)
+# ──────────────────────────────────────────────────────────────────────────────
 
-def favorites_keyboard(anime_rows: list) -> dict:
+def anime_list_keyboard(anime_rows: list, back_callback: str = "main_menu") -> dict:
     rows = []
     for a in anime_rows:
-        rows.append([(f"🎬 {escape(a['title'])}", f"anime:{a['id']}")])
+        label = "🎬 {}".format(escape(a["title"]))
+        if a["premium"]:
+            label = "💎 " + label
+        rows.append([(label, "anime:{}".format(a["id"]))])
+    rows.append([("⬅️ Orqaga", back_callback)])
+    return inline(rows)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ANIME PAGE
+# ──────────────────────────────────────────────────────────────────────────────
+
+def anime_page_keyboard(anime_id: int, is_fav: bool = False,
+                        is_following: bool = False,
+                        user_rating: int = 0,
+                        back_callback: str = "cat:new:0") -> dict:
+    fav_text = "❌ Sevimlilardan o'chirish" if is_fav else "⭐ Sevimlilarga"
+    follow_text = "📌 Kuzatishni bekor qilish" if is_following else "📌 Kuzatish"
+    rows = [
+        [("▶️ Ko'rish", "watch:{}".format(anime_id))],
+        [(fav_text, "favorite:{}".format(anime_id)),
+         (follow_text, "follow:{}".format(anime_id))],
+        [("⭐ Baholash", "rate_menu:{}".format(anime_id)),
+         ("💬 Fikr qoldirish", "review:{}".format(anime_id))],
+        [("📤 Ulashish", "share:{}".format(anime_id))],
+        [("⬅️ Orqaga", back_callback)],
+    ]
+    return inline(rows)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# EPISODES
+# ──────────────────────────────────────────────────────────────────────────────
+
+def episodes_keyboard(episodes: list, anime_id: int,
+                      page: int = 0) -> dict:
+    """Episode selection keyboard with pagination (20 per page)."""
+    page_size = 20
+    total = len(episodes)
+    total_pages = max(1, (total + page_size - 1) // page_size)
+    page = max(0, min(page, total_pages - 1))
+    start = page * page_size
+    page_eps = episodes[start:start + page_size]
+
+    rows = []
+    row = []
+    for ep in page_eps:
+        label = "▶️ {}".format(ep["episode_number"])
+        row.append((label, "episode:{}:{}".format(anime_id, ep["episode_number"])))
+        if len(row) == 4:
+            rows.append(row)
+            row = []
+    if row:
+        rows.append(row)
+
+    nav = []
+    if page > 0:
+        nav.append(("⬅️", "ep_page:{}:{}".format(anime_id, page - 1)))
+    nav.append(("{}/{}".format(page + 1, total_pages), "noop"))
+    if page < total_pages - 1:
+        nav.append(("➡️", "ep_page:{}:{}".format(anime_id, page + 1)))
+    if len(nav) > 1:
+        rows.append(nav)
+
+    rows.append([("⬅️ Orqaga", "anime:{}".format(anime_id))])
+    return inline(rows)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# RATING
+# ──────────────────────────────────────────────────────────────────────────────
+
+def rating_keyboard(anime_id: int) -> dict:
+    stars = [
+        [("⭐ 1", "rate:{}:1".format(anime_id)),
+         ("⭐⭐ 2", "rate:{}:2".format(anime_id))],
+        [("⭐⭐⭐ 3", "rate:{}:3".format(anime_id)),
+         ("⭐⭐⭐⭐ 4", "rate:{}:4".format(anime_id))],
+        [("⭐⭐⭐⭐⭐ 5", "rate:{}:5".format(anime_id))],
+        [("⬅️ Orqaga", "anime:{}".format(anime_id))],
+    ]
+    return inline(stars)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# PREMIUM
+# ──────────────────────────────────────────────────────────────────────────────
+
+def premium_keyboard(prices: Optional[dict] = None) -> dict:
+    prices = prices or PREMIUM_PRICES
+    plan_labels = {
+        "7": "7 kun", "30": "30 kun", "90": "90 kun", "365": "1 yil"
+    }
+    rows = []
+    for days, price in sorted(prices.items(), key=lambda x: int(x[0])):
+        label = "💎 Premium {} — {:,} UZS".format(
+            plan_labels.get(days, "{} kun".format(days)), price
+        ).replace(",", " ")
+        rows.append([(label, "premium:{}".format(days))])
     rows.append([("⬅️ Orqaga", "main_menu")])
     return inline(rows)
 
 
-# ─── ADMIN PANEL ─────────────────────────────────────────────────────────────
+def premium_confirm_keyboard(days: str, price: int) -> dict:
+    return inline([
+        [("✅ Sotib olish ({:,} UZS)".format(price).replace(",", " "),
+          "premium_buy:{}".format(days))],
+        [("⬅️ Orqaga", "premium_menu")],
+    ])
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# CHANNELS
+# ──────────────────────────────────────────────────────────────────────────────
+
+def channels_keyboard(channels: list) -> dict:
+    rows = []
+    for ch in channels:
+        username = ch["username"] or ""
+        title = ch["title"] or "Kanal {}".format(ch["id"])
+        if username:
+            url = "https://t.me/{}".format(username.lstrip("@"))
+            rows.append([("📢 {}".format(escape(title)), url, "url")])
+        else:
+            rows.append([("📢 {}".format(escape(title)), "noop")])
+    rows.append([("✅ Tekshirish", "check_subscription")])
+    return inline(rows)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# FAVORITES
+# ──────────────────────────────────────────────────────────────────────────────
+
+def favorites_keyboard(anime_rows: list) -> dict:
+    rows = []
+    for a in anime_rows:
+        rows.append([("🎬 {}".format(escape(a["title"])), "anime:{}".format(a["id"]))])
+    rows.append([("⬅️ Orqaga", "main_menu")])
+    return inline(rows)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# WATCHLIST
+# ──────────────────────────────────────────────────────────────────────────────
+
+def watchlist_keyboard(anime_rows: list) -> dict:
+    rows = []
+    for a in anime_rows:
+        rows.append([("📌 {}".format(escape(a["title"])), "anime:{}".format(a["id"]))])
+    rows.append([("⬅️ Orqaga", "main_menu")])
+    return inline(rows)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# LEADERBOARD
+# ──────────────────────────────────────────────────────────────────────────────
+
+def leaderboard_keyboard(page: int, total_pages: int) -> dict:
+    nav = []
+    if page > 0:
+        nav.append(("⬅️", "leaderboard:{}".format(page - 1)))
+    nav.append(("{}/{}".format(page + 1, total_pages), "noop"))
+    if page < total_pages - 1:
+        nav.append(("➡️", "leaderboard:{}".format(page + 1)))
+    rows = []
+    if len(nav) > 1:
+        rows.append(nav)
+    rows.append([("⬅️ Orqaga", "main_menu")])
+    return inline(rows)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ADMIN PANEL
+# ──────────────────────────────────────────────────────────────────────────────
 
 def admin_menu_keyboard() -> dict:
     return inline([
-        [("➕ Anime qo'shish",  "admin:add_anime"),
-         ("➕ Qism qo'shish",   "admin:add_episode")],
-        [("✏️ Anime tahrirlash", "admin:edit_anime"),
-         ("🗑 Anime o'chirish", "admin:delete_anime")],
+        [("🎬 Anime", "admin:anime_menu"),
+         ("📺 Qismlar", "admin:episode_menu")],
         [("👥 Foydalanuvchilar", "admin:users"),
-         ("📊 Statistika",      "admin:stats")],
-        [("📢 Kanallar",        "admin:channels"),
-         ("💰 Balans boshqaruvi", "admin:balance")],
-        [("💎 Premium",         "admin:premium"),
-         ("⚙️ Sozlamalar",      "admin:settings")],
-        [("❌ Yopish",          "admin:close")],
+         ("💎 Premium", "admin:premium_menu")],
+        [("💰 To'lovlar", "admin:payments"),
+         ("📢 Kanallar", "admin:channels")],
+        [("📣 Broadcast", "admin:broadcast"),
+         ("📢 Reklama", "admin:ads_menu")],
+        [("📊 Statistika", "admin:analytics"),
+         ("⭐ Sharhlar", "admin:reviews")],
+        [("💾 Backup", "admin:backup"),
+         ("📤 Export", "admin:export")],
+        [("⚙️ Sozlamalar", "admin:settings"),
+         ("🔧 Texnik ish", "admin:maintenance")],
+        [("❌ Yopish", "admin:close")],
+    ])
+
+
+def admin_anime_menu_keyboard() -> dict:
+    return inline([
+        [("➕ Anime qo'shish", "admin:add_anime"),
+         ("✏️ Tahrirlash", "admin:edit_anime")],
+        [("🗑 O'chirish", "admin:delete_anime"),
+         ("📋 Ro'yxat", "admin:list_anime")],
+        [("⬅️ Orqaga", "admin:menu")],
+    ])
+
+
+def admin_episode_menu_keyboard() -> dict:
+    return inline([
+        [("➕ Qism qo'shish", "admin:add_episode"),
+         ("🗑 Qism o'chirish", "admin:delete_episode")],
+        [("⬅️ Orqaga", "admin:menu")],
     ])
 
 
 def admin_user_keyboard(telegram_id: int) -> dict:
     return inline([
-        [("💰 Balans qo'shish",  f"admin_balance:add:{telegram_id}"),
-         ("💸 Balans ayirish",   f"admin_balance:remove:{telegram_id}")],
-        [("💎 Premium berish",   f"admin_premium_give:{telegram_id}"),
-         ("🚫 Block",            f"admin_block:{telegram_id}")],
-        [("⬅️ Orqaga",           "admin:users")],
+        [("💰 Balans qo'shish", "admin_balance:add:{}".format(telegram_id)),
+         ("💸 Balans ayirish", "admin_balance:remove:{}".format(telegram_id))],
+        [("💎 Premium berish", "admin_premium_give:{}".format(telegram_id)),
+         ("💎 Premium o'chirish", "admin_premium_remove:{}".format(telegram_id))],
+        [("🚫 Block", "admin_block:{}".format(telegram_id)),
+         ("✅ Blokni ochish", "admin_unblock:{}".format(telegram_id))],
+        [("⬅️ Orqaga", "admin:users")],
     ])
 
 
 def admin_delete_confirm_keyboard(anime_id: int) -> dict:
     return inline([
-        [("✅ Ha, o'chirish", f"admin_delete_confirm:{anime_id}"),
-         ("❌ Yo'q",          "admin:delete_anime")],
+        [("✅ Ha, o'chirish", "admin_delete_confirm:{}".format(anime_id)),
+         ("❌ Yo'q", "admin:anime_menu")],
     ])
 
 
@@ -203,20 +359,56 @@ def admin_channels_keyboard(channels: list) -> dict:
     rows = []
     for ch in channels:
         rows.append([
-            (f"🗑 {escape(ch['title'] or ch['username'])}", f"admin_del_channel:{ch['id']}"),
+            ("🗑 {}".format(escape(ch["title"] or ch["username"] or ch["telegram_channel_id"])),
+             "admin_del_channel:{}".format(ch["id"])),
         ])
     rows.append([("➕ Kanal qo'shish", "admin_add_channel")])
     rows.append([("⬅️ Orqaga", "admin:menu")])
     return inline(rows)
 
 
-def admin_premium_plans_keyboard() -> dict:
-    plan_labels = {"7": "7 kun", "30": "30 kun", "365": "1 yil"}
+def admin_premium_plans_keyboard(target_id: int) -> dict:
+    plan_labels = {
+        "7": "7 kun", "30": "30 kun", "90": "90 kun", "365": "1 yil"
+    }
     rows = []
-    for days in PREMIUM_PRICES:
-        rows.append([(f"💎 {plan_labels.get(days, days+' kun')}", f"admin_premium_plan:{days}")])
+    for days in sorted(PREMIUM_PRICES.keys(), key=int):
+        rows.append([(
+            "💎 {}".format(plan_labels.get(days, "{} kun".format(days))),
+            "admin_premium_plan:{}:{}".format(target_id, days)
+        )])
+    rows.append([("⬅️ Orqaga", "admin:users")])
+    return inline(rows)
+
+
+def admin_ads_keyboard(ads: list) -> dict:
+    rows = []
+    for ad in ads:
+        status = "✅" if ad["active"] else "❌"
+        rows.append([(
+            "{} {} ({}x)".format(status, escape(ad["title"]), ad["views"]),
+            "admin_ad:{}".format(ad["id"])
+        )])
+    rows.append([("➕ Reklama qo'shish", "admin:add_ad")])
     rows.append([("⬅️ Orqaga", "admin:menu")])
     return inline(rows)
+
+
+def admin_ad_manage_keyboard(ad_id: int, active: int) -> dict:
+    toggle_text = "❌ O'chirish" if active else "✅ Yoqish"
+    return inline([
+        [(toggle_text, "admin_ad_toggle:{}".format(ad_id)),
+         ("🗑 O'chirish", "admin_ad_delete:{}".format(ad_id))],
+        [("⬅️ Orqaga", "admin:ads_menu")],
+    ])
+
+
+def admin_review_keyboard(review_id: int) -> dict:
+    return inline([
+        [("✅ Tasdiqlash", "admin_review:approve:{}".format(review_id)),
+         ("❌ Rad etish", "admin_review:reject:{}".format(review_id))],
+        [("⬅️ Orqaga", "admin:reviews")],
+    ])
 
 
 def back_to_main() -> dict:
@@ -228,4 +420,6 @@ def back_to_admin() -> dict:
 
 
 def yes_no_keyboard(yes_cb: str, no_cb: str) -> dict:
-    return inline([[(f"✅ Ha", yes_cb), (f"❌ Yo'q", no_cb)]])
+    return inline([
+        [("✅ Ha", yes_cb), ("❌ Yo'q", no_cb)]
+    ])
